@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"github.com/airbrake/gobrake/v4"
 )
@@ -23,10 +24,18 @@ var _ = Describe("Notifier", func() {
 		}
 		server := httptest.NewServer(http.HandlerFunc(handler))
 
+		s3Handler := func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{}`))
+			Expect(err).To(BeNil())
+		}
+		s3Server := httptest.NewServer(http.HandlerFunc(s3Handler))
+
 		notifier = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:  1,
-			ProjectKey: "key",
-			Host:       server.URL,
+			ProjectId:           1,
+			ProjectKey:          "key",
+			Host:                server.URL,
+			RemoteConfigBaseURL: s3Server.URL,
 		})
 	})
 

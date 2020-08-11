@@ -96,6 +96,8 @@ type NotifierOptions struct {
 
 	// http.Client that is used to interact with Airbrake API.
 	HTTPClient *http.Client
+
+	RemoteConfigBaseURL string
 }
 
 func (opt *NotifierOptions) init() {
@@ -188,6 +190,8 @@ type Notifier struct {
 	Queries *queryStats
 	Queues  *queueStats
 
+	remoteConfig *remoteConfig
+
 	rateLimitReset uint32 // atomic
 	_closed        uint32 // atomic
 }
@@ -202,6 +206,8 @@ func NewNotifierWithOptions(opt *NotifierOptions) *Notifier {
 		Routes:  newRoutes(opt),
 		Queries: newQueryStats(opt),
 		Queues:  newQueueStats(opt),
+
+		remoteConfig: newRemoteConfig(opt),
 	}
 
 	n.AddFilter(httpUnsolicitedResponseFilter)
@@ -215,6 +221,13 @@ func NewNotifierWithOptions(opt *NotifierOptions) *Notifier {
 	if len(opt.KeysBlocklist) > 0 {
 		n.AddFilter(NewBlocklistKeysFilter(opt.KeysBlocklist...))
 	}
+
+	n.remoteConfig.Poll(func(rc *remoteConfig) {
+		opt.DisableErrorNotifications = !rc.EnabledErrorNotifications()
+		opt.DisableAPM = !rc.EnabledAPM()
+		opt.Host = rc.ErrorHost()
+		opt.APMHost = rc.APMHost()
+	})
 
 	return n
 }
@@ -411,6 +424,11 @@ func (n *Notifier) Flush() {
 }
 
 func (n *Notifier) Close() error {
+	if n.closed() {
+		return nil
+	}
+
+	n.remoteConfig.StopPolling()
 	return n.CloseTimeout(waitTimeout)
 }
 

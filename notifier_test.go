@@ -20,7 +20,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/airbrake/gobrake/v4"
-	"github.com/airbrake/gobrake/v4/internal/testpkg1"
+	testpkg1 "github.com/airbrake/gobrake/v4/internal/testpkg1"
 )
 
 func TestGobrake(t *testing.T) {
@@ -59,10 +59,18 @@ var _ = Describe("Notifier", func() {
 		}
 		server := httptest.NewServer(http.HandlerFunc(handler))
 
+		s3Handler := func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{}`))
+			Expect(err).To(BeNil())
+		}
+		s3Server := httptest.NewServer(http.HandlerFunc(s3Handler))
+
 		opt = &gobrake.NotifierOptions{
-			ProjectId:  1,
-			ProjectKey: "key",
-			Host:       server.URL,
+			ProjectId:           1,
+			ProjectKey:          "key",
+			Host:                server.URL,
+			RemoteConfigBaseURL: s3Server.URL,
 		}
 	})
 
@@ -377,9 +385,10 @@ var _ = Describe("Notifier", func() {
 
 		n := gobrake.NewNotifierWithOptions(
 			&gobrake.NotifierOptions{
-				ProjectId:  1,
-				ProjectKey: "abc",
-				Host:       "http://localhost:1234",
+				ProjectId:           1,
+				ProjectKey:          "abc",
+				Host:                "http://localhost:1234",
+				RemoteConfigBaseURL: "http://localhost:1234",
 			},
 		)
 		n.Notify(errors.New("oops"), nil)
@@ -418,11 +427,19 @@ var _ = Describe("Deprecated filter keys option", func() {
 		}
 		server := httptest.NewServer(http.HandlerFunc(handler))
 
+		s3Handler := func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{}`))
+			Expect(err).To(BeNil())
+		}
+		s3Server := httptest.NewServer(http.HandlerFunc(s3Handler))
+
 		opt = &gobrake.NotifierOptions{
-			ProjectId:     1,
-			ProjectKey:    "key",
-			Host:          server.URL,
-			KeysBlacklist: deprecatedKeysOption,
+			ProjectId:           1,
+			ProjectKey:          "key",
+			Host:                server.URL,
+			RemoteConfigBaseURL: s3Server.URL,
+			KeysBlacklist:       deprecatedKeysOption,
 		}
 	})
 
@@ -478,10 +495,18 @@ var _ = Describe("rate limiting", func() {
 		}
 		server := httptest.NewServer(http.HandlerFunc(handler))
 
+		s3Handler := func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{}`))
+			Expect(err).To(BeNil())
+		}
+		s3Server := httptest.NewServer(http.HandlerFunc(s3Handler))
+
 		notifier = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:  1,
-			ProjectKey: "key",
-			Host:       server.URL,
+			ProjectId:           1,
+			ProjectKey:          "key",
+			Host:                server.URL,
+			RemoteConfigBaseURL: s3Server.URL,
 		})
 	})
 
@@ -510,10 +535,18 @@ var _ = Describe("Notice exceeds 64KB", func() {
 		}
 		server := httptest.NewServer(http.HandlerFunc(handler))
 
+		s3Handler := func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{}`))
+			Expect(err).To(BeNil())
+		}
+		s3Server := httptest.NewServer(http.HandlerFunc(s3Handler))
+
 		notifier = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:  1,
-			ProjectKey: "key",
-			Host:       server.URL,
+			ProjectId:           1,
+			ProjectKey:          "key",
+			Host:                server.URL,
+			RemoteConfigBaseURL: s3Server.URL,
 		})
 	})
 
@@ -543,10 +576,18 @@ var _ = Describe("server returns HTTP 400 error message", func() {
 		}
 		server := httptest.NewServer(http.HandlerFunc(handler))
 
+		s3Handler := func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{}`))
+			Expect(err).To(BeNil())
+		}
+		s3Server := httptest.NewServer(http.HandlerFunc(s3Handler))
+
 		notifier = gobrake.NewNotifierWithOptions(&gobrake.NotifierOptions{
-			ProjectId:  1,
-			ProjectKey: "key",
-			Host:       server.URL,
+			ProjectId:           1,
+			ProjectKey:          "key",
+			Host:                server.URL,
+			RemoteConfigBaseURL: s3Server.URL,
 		})
 	})
 
@@ -594,10 +635,18 @@ var _ = Describe("Notifier request filter", func() {
 		}
 		server := httptest.NewServer(http.HandlerFunc(handler))
 
+		s3Handler := func(w http.ResponseWriter, req *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, err := w.Write([]byte(`{}`))
+			Expect(err).To(BeNil())
+		}
+		s3Server := httptest.NewServer(http.HandlerFunc(s3Handler))
+
 		opt = &gobrake.NotifierOptions{
-			ProjectId:  1,
-			ProjectKey: "key",
-			Host:       server.URL,
+			ProjectId:           1,
+			ProjectKey:          "key",
+			Host:                server.URL,
+			RemoteConfigBaseURL: s3Server.URL,
 		}
 
 	})
